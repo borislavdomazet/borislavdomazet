@@ -1,0 +1,3 @@
+! U1 setvar "media.type" "journal"
+! U1 setvar "media.sense_mode" "bar"
+~jc^xa^jus^xz
