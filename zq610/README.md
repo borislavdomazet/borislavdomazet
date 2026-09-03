@@ -1,40 +1,51 @@
 # ZQ610 kalibracija (ZPL)
 
 CPCL na ZQ610 štampa OK bez kalibracije dužine. ZPL koristi izmjerenu dužinu naljepnice.
-Ako ZPL odštampa zadanu naljepnicu pa izbaci još praznih, printer traži gap/mark sa pogrešnim
-senzorom ili pogrešnom dužinom. Zebra to rješava slanjem jednog txt fajla na printer.
+Ako ZPL odštampa zadanu naljepnicu pa izbaci još praznih, printer traži gap sa pogrešnom
+dužinom. Rješenje je raw slanje ovog txt fajla (ne preko Windows Print dijaloga):
 
-Zvanični članak: https://support.zebra.com/article/ZQ610-and-ZQ620-Media-Calibration
+```
+! U1 setvar "media.type" "label"
+! U1 setvar "media.sense_mode" "gap"
+~jc^xa^jus^xz
+```
 
-Isti simptom (jedna dobra, pa prazne): https://support.zebra.com/article/000026219
+To je fajl `calibrate-gap.txt`. Zebra: https://support.zebra.com/article/ZQ610-and-ZQ620-Media-Calibration
 
-## Koji fajl slati
+## Kako poslati txt na printer
 
-- `calibrate-gap.txt` — die-cut naljepnice sa razmakom (gap/notch). Ovo je najčešće.
-- `calibrate-black-mark.txt` — crna crta (black mark) na poleđini.
-- `calibrate-journal.txt` — continuous/receipt, bez gapa.
-- `query-settings.txt` — samo čita trenutne postavke (odgovor stiže kroz ZSU komunikaciju).
+Najčešće se ovo radilo sa PC-a preko USB-a i **Zebra Setup Utilities**. ZQ610 koristi USB kabl
+(printer strana je mini-USB). Driver i ZSU: https://www.zebra.com/us/en/support-downloads/software/printer-software/zebra-setup-utilities.html
 
-Ključna ZPL linija u svakom kalibracionom fajlu:
+### Način 1: Send File (ako šalješ sačuvani .txt)
 
-    ~jc^xa^jus^xz
+1. Ubaci naljepnice, zatvori poklopac, uključi printer.
+2. Spoji ZQ610 na PC USB kablom.
+3. Otvori **Zebra Setup Utilities**, označi ZQ610 u listi.
+4. **Open Printer Tools**.
+5. Tab **Action** → **Send File**.
+6. Izaberi `calibrate-gap.txt` → **Send**.
 
-`~jc` izmjeri dužinu, `^JUS` snimi u printer. CPCL ovu kalibraciju ne treba.
+Na novijem ZDesigner drajveru (v8/v10): Printer properties → **Driver Settings** → **Send file**.
 
-## Kako poslati
+### Način 2: paste komandi (isti efekat, bez fajla)
 
-1. Ubaci medij, zatvori poklopac.
-2. Zebra Setup Utilities → Open Communication With Printer
-   (ili pošalji raw fajl preko USB/Bluetooth, bez Windows spooler-a).
-3. Pošalji sadržaj odgovarajućeg `calibrate-*.txt` fajla.
-4. Printer će izbaciti nekoliko naljepnica dok kalibriše.
-5. Ugasi printer i upali ga ponovo.
-6. Feed dugme mora izbaciti tačno jednu naljepnicu.
+1. U ZSU označi printer → **Open Communication with Printer**.
+2. U gornji box zalijepi tri linije iz `calibrate-gap.txt`.
+3. Svaka SGD linija mora imati Enter na kraju (CR/LF), inače printer ignoriše `setvar`.
+4. **Send to Printer**.
 
-Ne slati preko običnog Windows print dijaloga — može ubaciti form-feed (0x0C),
-a mobilni Zebra printer to tretira kao prazan feed. Samo raw komande.
+### Posle slanja
 
-## Ako i posle kalibracije ZPL izbacuje prazne
+1. Printer će sam izbaciti nekoliko naljepnica dok mjeri gap (`~jc`).
+2. Ugasi printer i upali ga ponovo (`^JUS` je snimio postavke).
+3. Feed dugme mora izbaciti **tačno jednu** naljepnicu. Ako i dalje ide više, pošalji fajl još jednom.
 
-Provjeri ZPL stream: ne smije imati extra `^XZ`, form-feed (0x0C), ni spooler header.
-Mobilni printeri reaguju na te karaktere, desktop Zebra ih ignoriše.
+Ne koristiti običan Windows *Print* na .txt — spooler može ubaciti form-feed (0x0C), a mobilni
+Zebra to tretira kao prazan feed.
+
+## Ostali mediji
+
+- `calibrate-black-mark.txt` — crna crta na poleđini (`sense_mode` = `bar`)
+- `calibrate-journal.txt` — continuous/receipt, bez gapa
+- `query-settings.txt` — čita trenutne postavke; odgovor se vidi u Communication prozoru
