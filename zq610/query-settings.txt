@@ -1,0 +1,5 @@
+! U1 getvar "media.type"
+! U1 getvar "media.sense_mode"
+! U1 getvar "zpl.label_length"
+! U1 getvar "device.languages"
+! U1 getvar "ezpl.media_type"
